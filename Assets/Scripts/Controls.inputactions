@@ -51,9 +51,18 @@
                     "initialStateCheck": false
                 },
                 {
-                    "name": "Resume",
+                    "name": "Punch",
                     "type": "Button",
-                    "id": "2588fd6d-706b-4e5c-8bf1-903c016af75e",
+                    "id": "d036f627-1085-486e-8152-c6b06b253cae",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Kick",
+                    "type": "Button",
+                    "id": "67f086dd-acb4-48e5-8f41-ed06f664af4a",
                     "expectedControlType": "Button",
                     "processors": "",
                     "interactions": "",
@@ -162,8 +171,30 @@
                 },
                 {
                     "name": "",
+                    "id": "7864845c-7084-4560-ba44-8023a9740757",
+                    "path": "<Gamepad>/buttonSouth",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Jump",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
                     "id": "4bc2644d-5ad8-45db-a5d4-5eae9511bf1a",
-                    "path": "<Keyboard>/p",
+                    "path": "<Keyboard>/escape",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Pause",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "ed20b80e-4f7c-4831-b369-9ea998160682",
+                    "path": "<Gamepad>/start",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
@@ -184,12 +215,34 @@
                 },
                 {
                     "name": "",
-                    "id": "dafc057b-30ee-4c8d-9fbe-c05f33db6527",
-                    "path": "<Keyboard>/r",
+                    "id": "898007f6-0b82-458d-9d08-57fd8b52035c",
+                    "path": "<Gamepad>/leftTrigger",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
-                    "action": "Resume",
+                    "action": "Run",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "7ac00ca6-be50-4800-9bd7-24ad70e990c0",
+                    "path": "<Keyboard>/e",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Punch",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "cd994d80-8fb0-4454-8801-09cb6aed6c02",
+                    "path": "<Keyboard>/q",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Kick",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

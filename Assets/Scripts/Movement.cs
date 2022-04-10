@@ -1,32 +1,31 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using Cinemachine;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 public class Movement : MonoBehaviour
 {
-    public Vector2 move;
-    public Vector3 look;
-    public float jumpSpeed = 5000f;
     bool canJump;
-    [SerializeField] private int speed = 10;
-    [SerializeField] private bool usePhysics = true;
+    public float jumpSpeed = 5000f;
+    private float speed;
+    [SerializeField] private float baseSpeed = 10f;
     [SerializeField] private float jumpForce = 50;
-    [SerializeField] private float gravity = -9.81f;
-    [SerializeField] private LayerMask groundLayer;
-    [SerializeField] private Transform PlayerCamera;
-    [SerializeField] private float cameraRotationLimit = 85f;
-    [SerializeField] private float Sensitivity;
+
+    [SerializeField] private CinemachineImpulseSource _impulseSource;
 
     private Camera _mainCamera;
     private Rigidbody _rb;
     private Controls _controls;
     private Animator _animator;
     private static readonly int IsWalking = Animator.StringToHash("isWalking");       
-
+    private static readonly int IsRunning = Animator.StringToHash("isRunning");
+    private static readonly int IsJumping = Animator.StringToHash("isJumping");
+    private static readonly int GetPunch = Animator.StringToHash("getPunch");
+    private static readonly int GetKick = Animator.StringToHash("getKick");
     private void Awake()
     {
+        _impulseSource = GetComponent<CinemachineImpulseSource>();
         _controls = new Controls();
     }
 
@@ -34,22 +33,6 @@ public class Movement : MonoBehaviour
     {
         Cursor.lockState = CursorLockMode.Locked;
         _controls.Enable();
-
-        _controls.Player.Move.performed += ctx => {
-            move = ctx.ReadValue<Vector2>();
-        };
-
-        _controls.Player.Move.canceled += ctx => {
-            move = Vector2.zero;
-        };
-
-        _controls.Player.Look.performed += ctx => {
-            look = ctx.ReadValue<Vector3>();
-        };
-
-        _controls.Player.Look.canceled += ctx => {
-            look = Vector3.zero;
-        };
     }
 
     private void OnDisable()
@@ -60,6 +43,7 @@ public class Movement : MonoBehaviour
 
     private void Start()
     {
+        speed = baseSpeed;
         _mainCamera = Camera.main;
         _rb = gameObject.GetComponent<Rigidbody>();
         _animator = gameObject.GetComponentInChildren<Animator>();
@@ -67,80 +51,50 @@ public class Movement : MonoBehaviour
 
     private void Update()
     {
-        if (usePhysics)
-        {
-            return;
-        }
-        if (_controls.Player.Pause.IsPressed())
-        {
-            SceneManager.LoadScene("SampleScene");
-        }
-        
-        if (_controls.Player.Jump.IsPressed() & canJump)
-        {   
-            _rb.AddForce(0f, jumpSpeed * Time.deltaTime, 0f);
-        }
-        
-        if (_controls.Player.Move.IsPressed())
-        {
-            _animator.SetBool(IsWalking, true);
-            Vector2 input = _controls.Player.Move.ReadValue<Vector2>();
-            Vector3 target = HandleInput(input);
-            Move(target);
-        }
-        else
-        {
-            _animator.SetBool(IsWalking, false);
-        }
-    }
-
-    public void Resume()
-    {
-        Time.timeScale = 1;
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
-    }
-
-    public void Pause(){
-        Time.timeScale = 0;
-        Cursor.lockState = CursorLockMode.None;
-        Cursor.visible = true;
-        SceneManager.LoadScene("MenuScene");
+        if (!_controls.Player.Move.IsPressed()) return;
+        Vector2 input = _controls.Player.Move.ReadValue<Vector2>();
+        Vector3 target = HandleInput(input);
+        RotateCharacter(target);
     }
 
     private void FixedUpdate()
     {
-        if (!usePhysics)
+        if (_controls.Player.Punch.IsPressed())
         {
-            return;
+             if (!_animator.GetBool(GetPunch))
+            {
+                _animator.SetBool(GetPunch, true);
+            }
         }
-        
-        if (_controls.Player.Pause.IsPressed())
+        if (_controls.Player.Kick.IsPressed())
         {
-            Pause();
+             if (!_animator.GetBool(GetKick))
+            {
+                _animator.SetBool(GetKick, true);
+            }
         }
-        if (_controls.Player.Resume.IsPressed())
-        {
-            Resume();
-        }
-
         if (_controls.Player.Run.IsPressed())
         {
-            CameraShake.Instance.Shaking(0.1f, 0.1f);
-            speed = 50;
+            _animator.SetBool(IsRunning, true);
+            _impulseSource.GenerateImpulse();            
+            speed = baseSpeed * 1.5f;
         }else{
-            speed = 10;
+            _animator.SetBool(IsRunning, false);
+            speed = baseSpeed;
         }
         
         if (_controls.Player.Jump.IsPressed() & canJump)
         {
+             if (!_animator.GetBool(IsJumping))
+            {
+                _animator.SetBool(IsJumping, true);
+            }
             _rb.AddForce(1f, jumpSpeed * Time.deltaTime, 2f);
         }
 
         if (_controls.Player.Move.IsPressed())
         {
-            _animator.SetBool(IsWalking, true);
-            
+             _animator.SetBool(IsWalking, true);
             Vector2 input = _controls.Player.Move.ReadValue<Vector2>();
             Vector3 target = HandleInput(input);
             MovePhysics(target);
@@ -150,14 +104,17 @@ public class Movement : MonoBehaviour
             _animator.SetBool(IsWalking, false);
         }
     }
-
+   private void RotateCharacter(Vector3 target)
+    {
+        transform.rotation = Quaternion.LookRotation(target-transform.position);
+    }
     private Vector3 HandleInput(Vector2 input)
     {
         Vector3 forward = _mainCamera.transform.forward;
         Vector3 right = _mainCamera.transform.right;
 
         forward.y = 0;
-        right.y = 1;
+        right.y = 0;
         
         forward.Normalize();
         right.Normalize();
@@ -180,17 +137,20 @@ public class Movement : MonoBehaviour
 
     private void OnCollisionEnter(Collision collision)
     {
-        if (collision.gameObject.name == "Floor")
+        if (collision.gameObject.name == "Floor" || collision.gameObject.name == "Container")
         {
             canJump = true;
+            _animator.SetBool(IsJumping, false);
         }
     }
 
     private void OnCollisionExit(Collision collision)
     {
-        if (collision.gameObject.name == "Floor")
+        if (collision.gameObject.name == "Floor" || collision.gameObject.name == "Container")
         {
             canJump = false;
+            _animator.SetBool(GetPunch, false);
+            _animator.SetBool(GetKick, false);
         }
     }    
 }
